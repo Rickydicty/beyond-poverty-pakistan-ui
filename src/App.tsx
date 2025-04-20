@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 const Login = lazy(() => import("./pages/login"));
 const Register = lazy(() => import("./pages/register"));
 const Dashboard = lazy(() => import("./pages/dashboard"));
+const AdminDashboard = lazy(() => import("./pages/admin-dashboard"));
 const Welfare = lazy(() => import("./pages/welfare"));
 const Jobs = lazy(() => import("./pages/jobs"));
 const Training = lazy(() => import("./pages/training"));
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/welfare" element={<Welfare />} />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/training" element={<Training />} />
