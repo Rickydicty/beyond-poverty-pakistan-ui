@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useTheme } from 'next-themes';
 
@@ -7,17 +7,30 @@ export function StarryBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
+  // Create scene elements with useMemo to avoid recreating them on every render
+  const sceneObjects = useMemo(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 500;
     const renderer = new THREE.WebGLRenderer({ alpha: true });
+    
+    return { scene, camera, renderer };
+  }, []);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const { scene, camera, renderer } = sceneObjects;
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     containerRef.current.appendChild(renderer.domElement);
 
-    const starGeometry = new THREE.BufferGeometry();
+    // Clear existing objects from the scene
+    while(scene.children.length > 0) { 
+      scene.remove(scene.children[0]); 
+    }
+
+    // Create star material that respects the theme
     const starMaterial = new THREE.PointsMaterial({
       color: theme === 'dark' ? 0xFFFFFF : 0x0F3D27,
       size: 0.5,
@@ -25,6 +38,8 @@ export function StarryBackground() {
       opacity: theme === 'dark' ? 0.8 : 0.3,
     });
 
+    // Create stars
+    const starGeometry = new THREE.BufferGeometry();
     const starsVertices = [];
     for (let i = 0; i < 6000; i++) {
       const x = (Math.random() - 0.5) * 2000;
@@ -37,8 +52,7 @@ export function StarryBackground() {
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
 
-    camera.position.z = 500;
-
+    // Animation function
     const animate = () => {
       requestAnimationFrame(animate);
       stars.rotation.y += 0.0002;
@@ -46,8 +60,10 @@ export function StarryBackground() {
       renderer.render(scene, camera);
     };
 
+    // Start animation
     animate();
 
+    // Handle window resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -56,11 +72,16 @@ export function StarryBackground() {
 
     window.addEventListener('resize', handleResize);
 
+    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      starGeometry.dispose();
+      starMaterial.dispose();
     };
-  }, [theme]);
+  }, [theme, sceneObjects]);
 
   return (
     <div
